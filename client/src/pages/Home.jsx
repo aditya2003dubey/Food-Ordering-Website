@@ -7,7 +7,7 @@ function Home() {
       {/* Hero Section */}
       <section className="bg-gradient-to-br from-orange-50 via-white to-orange-100">
 
-        <div className=" max-w-7xl mx-auto px-5 lg:px-8 min-h-[90vh] grid lg:grid-cols-2 items-center gap-12">
+        <div className="max-w-7xl mx-auto px-5 lg:px-8 min-h-[90vh] grid lg:grid-cols-2 items-center gap-12">
 
           {/* Left */}
 
@@ -17,7 +17,7 @@ function Home() {
               🍔 Fresh • Fast • Delicious
             </span>
 
-            <h1 className="mt-6 text-5xl lg:text-7xl font-black leading-tight text-gray-900">
+            <h1 className="mt-6 text-4xl lg:text-6xl font-black leading-tight text-gray-900">
 
               Discover
               <span className="text-orange-500"> Amazing</span>
@@ -142,7 +142,6 @@ function Home() {
         </div>
 
       </section>
-
       {/* Featured Foods */}
 
       <section className="py-20 bg-gray-50">
@@ -363,7 +362,6 @@ function Home() {
         </div>
 
       </section>
-
       {/* Customer Reviews */}
 
       <section className="py-20 bg-white">
@@ -440,7 +438,6 @@ function Home() {
         </div>
 
       </section>
-
       {/* Statistics */}
 
       <section className="py-16 bg-gradient-to-r from-orange-500 to-red-500 text-white">
@@ -482,12 +479,11 @@ function Home() {
         </div>
 
       </section>
-
       {/* Call To Action */}
 
       <section className="py-24 bg-gray-100">
 
-        <div className="max-w-7xl mx-auto px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-5 lg:px-8">
 
           <div className="bg-gradient-to-r from-orange-500 via-red-500 to-orange-600 rounded-[35px] p-10 lg:p-16 text-center shadow-2xl">
 
@@ -506,7 +502,7 @@ function Home() {
 
             </p>
 
-            <div className="mt-10 flex flex-wrap  justify-center items-center gap-6">
+            <div className="mt-10 flex flex-col sm:flex-row justify-center gap-5">
 
               <Link
                 to="/menu"
