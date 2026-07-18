@@ -4,6 +4,7 @@ import { FiMenu, FiX, FiShoppingCart } from "react-icons/fi";
 import Container from "./Container";
 
 function Navbar() {
+  const user = JSON.parse(localStorage.getItem("user"));
   const [open, setOpen] = useState(false);
 
   const navLinkStyle = ({ isActive }) =>
@@ -38,11 +39,37 @@ function Navbar() {
               Cart
             </NavLink>
 
-            <button
-              className="px-6 py-3 rounded-full bg-orange-500 text-white font-semibold hover:bg-orange-600 transition-all duration-300 shadow-lg"
-            >
-              Login
-            </button>
+            {
+              user ? (
+                <div className="flex items-center gap-4">
+
+                  <Link
+                    to="/profile"
+                    className="font-semibold text-gray-700 hover:text-orange-500"
+                  >
+                    👋 {user.name}
+                  </Link>
+
+                  <button
+                    onClick={() => {
+                      localStorage.removeItem("user");
+                      window.location.href = "/login";
+                    }}
+                    className="px-5 py-2 rounded-full bg-red-500 text-white font-semibold hover:bg-red-600 transition"
+                  >
+                    Logout
+                  </button>
+
+                </div>
+              ) : (
+                <Link
+                  to="/login"
+                  className="px-6 py-3 rounded-full bg-orange-500 text-white font-semibold hover:bg-orange-600 transition"
+                >
+                  Login
+                </Link>
+              )
+            }
 
             <Link
               to="/cart"
@@ -70,31 +97,31 @@ function Navbar() {
             {open ? <FiX size={28} /> : <FiMenu size={28} />}
           </button>
         </div>
-        </Container>
+      </Container>
 
-        {/* Mobile Menu */}
-        {open && (
-          <div className="md:hidden bg-white border-t">
-            <nav className="flex flex-col p-5 gap-5">
-              <NavLink to="/" onClick={() => setOpen(false)}>
-                Home
-              </NavLink>
+      {/* Mobile Menu */}
+      {open && (
+        <div className="md:hidden bg-white border-t">
+          <nav className="flex flex-col p-5 gap-5">
+            <NavLink to="/" onClick={() => setOpen(false)}>
+              Home
+            </NavLink>
 
-              <NavLink to="/menu" onClick={() => setOpen(false)}>
-                Menu
-              </NavLink>
+            <NavLink to="/menu" onClick={() => setOpen(false)}>
+              Menu
+            </NavLink>
 
-              <NavLink to="/cart" onClick={() => setOpen(false)}>
-                Cart
-              </NavLink>
+            <NavLink to="/cart" onClick={() => setOpen(false)}>
+              Cart
+            </NavLink>
 
-              <button className="bg-orange-500 text-white py-2 rounded-lg">
-                Login
-              </button>
-            </nav>
-          </div>
-        )}
-      
+            <button className="bg-orange-500 text-white py-2 rounded-lg">
+              Login
+            </button>
+          </nav>
+        </div>
+      )}
+
     </header >
   );
 }
