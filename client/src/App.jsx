@@ -14,6 +14,9 @@ import ProtectedRoute from "./components/ProtectedRoute";
 import Profile from "./pages/Profile";
 import Orders from "./pages/Orders";
 import Admin from "./pages/Admin";
+import AdminOrders from "./pages/AdminOrders";
+import Dashboard from "./pages/Dashboard";
+import NotFound from "./pages/NotFound";
 
 function App() {
   return (
@@ -48,6 +51,11 @@ function App() {
         </ProtectedRoute>
         } />
     <Route path="/admin" element={<Admin/>} />
+    <Route path="/admin/orders" element={<AdminOrders/>} />
+    <Route path="/admin/dashboard" element={<Dashboard/>} />
+
+    
+    <Route path="*" element={<NotFound/>} />
     </Routes>
   </main>
 

@@ -1,10 +1,15 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { placeOrder } from "../api/orderApi";
-import { createPaymentOrder } from "../api/paymentApi";
+import { createPaymentOrder, verifyPayment } from "../api/paymentApi";
+import { useCart } from "../context/CartContext";
+
 
 function Checkout() {
   const navigate = useNavigate();
+
+  const { cartItems, fetchCart } = useCart();
+
   const user = JSON.parse(localStorage.getItem("user"));
 
   const [formData, setFormData] = useState({
@@ -24,93 +29,158 @@ function Checkout() {
     });
   };
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    navigate("/success");
-  };
+  const subtotal = cartItems.reduce(
+    (total, item) =>
+      total + item.product.price * item.quantity,
+    0
+  );
 
-  const subtotal = 897;
-  const delivery = 49;
-  const gst = 18;
+  const delivery = subtotal > 0 ? 49 : 0;
+
+  const gst = Math.round(subtotal * 0.05);
+
   const total = subtotal + delivery + gst;
 
+  const validateForm = () => {
+    if (
+      !formData.fullName.trim() ||
+      !formData.email.trim() ||
+      !formData.phone.trim() ||
+      !formData.address.trim() ||
+      !formData.city.trim() ||
+      !formData.pincode.trim()
+    ) {
+      alert("Please fill all required fields.");
+      return false;
+    }
+
+    if (!/^[0-9]{10}$/.test(formData.phone)) {
+      alert("Please enter a valid 10 digit phone number.");
+      return false;
+    }
+
+    if (!/^[0-9]{6}$/.test(formData.pincode)) {
+      alert("Please enter a valid 6 digit pincode.");
+      return false;
+    }
+
+    return true;
+  };
+
   const handlePlaceOrder = async () => {
-
     try {
-
-      const token = user.token;
-
-      const order = {
+      const orderData = {
         user: user._id,
         items: cartItems,
-        totalAmount: totalPrice,
-        paymentMethod: "Cash on Delivery",
-      };
+        totalAmount: total,
+        paymentMethod:
+          formData.payment === "cod"
+            ? "Cash on Delivery"
+            : "Online Payment",
 
-      await placeOrder(order, token);
+        shippingAddress: {
+          fullName: formData.fullName,
+          email: formData.email,
+          phone: formData.phone,
+          address: formData.address,
+          city: formData.city,
+          pincode: formData.pincode,
+        },
+      };
+      await placeOrder(orderData, user.token);
+
+      await fetchCart();
 
       navigate("/success");
 
     } catch (error) {
-
       console.log(error);
-
       alert("Order Failed");
-
     }
-
   };
 
   const paymentHandler = async () => {
-    try {
-      const user = JSON.parse(localStorage.getItem("user"));
 
-      const order = await createPaymentOrder(
-        totalPrice,
-        user.token
-      );
+  if (!validateForm()) return;
 
-      const options = {
-        key: "YOUR_RAZORPAY_KEY_ID",
+  if (formData.payment === "cod") {
+    await handlePlaceOrder();
+    return;
+  }
 
-        amount: order.amount,
+  try {
 
-        currency: order.currency,
+    const response = await createPaymentOrder(
+      total,
+      user.token
+    );
 
-        name: "BiteNest",
+    const order = response.order;
 
-        description: "Food Order",
+    const options = {
+      key: import.meta.env.VITE_RAZORPAY_KEY_ID,
 
-        order_id: order.id,
+      amount: order.amount,
 
-        handler: async function (response) {
+      currency: order.currency,
 
-          alert("Payment Successful");
+      name: "BiteNest",
+
+      description: "Food Order",
+
+      order_id: order.id,
+
+      handler: async function (response) {
+
+        try {
 
           console.log(response);
 
-        },
+          const verify = await verifyPayment(response, user.token);
 
-        prefill: {
-          name: user.name,
-          email: user.email,
-        },
+          if (verify.success) {
 
-        theme: {
-          color: "#f97316",
-        },
-      };
+            await handlePlaceOrder();
 
-      const razor = new window.Razorpay(options);
+          } else {
 
-      razor.open();
+            alert("Payment Verification Failed");
 
-    } catch (error) {
+          }
 
-      console.log(error);
+        } catch (error) {
 
-    }
-  };
+          console.log(error);
+          alert("Payment Verification Failed");
+
+        }
+
+      },
+
+      prefill: {
+        name: formData.fullName,
+        email: formData.email,
+        contact: formData.phone,
+      },
+
+      theme: {
+        color: "#f97316",
+      },
+    };
+
+    const razorpay = new window.Razorpay(options);
+
+    razorpay.open();
+
+  } catch (error) {
+
+    console.log(error);
+    alert("Payment Failed");
+
+  }
+
+};
+
   return (
     <>
       {/* Hero */}
@@ -131,7 +201,6 @@ function Checkout() {
 
           {/* Left Form */}
           <form
-            onSubmit={handleSubmit}
             className="lg:col-span-2 bg-white rounded-3xl shadow-lg p-8"
           >
             <h2 className="text-3xl font-bold mb-8">
@@ -144,7 +213,9 @@ function Checkout() {
                 type="text"
                 name="fullName"
                 placeholder="Full Name"
+                value={formData.fullName}
                 onChange={handleChange}
+                required
                 className="border rounded-xl p-4 outline-none focus:border-orange-500"
               />
 
@@ -152,15 +223,21 @@ function Checkout() {
                 type="email"
                 name="email"
                 placeholder="Email"
+                value={formData.email}
                 onChange={handleChange}
+                required
                 className="border rounded-xl p-4 outline-none focus:border-orange-500"
               />
 
               <input
-                type="text"
+                type="tel"
                 name="phone"
                 placeholder="Phone Number"
+                value={formData.phone}
                 onChange={handleChange}
+                pattern="[0-9]{10}"
+                maxLength={10}
+                required
                 className="border rounded-xl p-4 outline-none focus:border-orange-500"
               />
 
@@ -168,7 +245,9 @@ function Checkout() {
                 type="text"
                 name="city"
                 placeholder="City"
+                value={formData.city}
                 onChange={handleChange}
+                required
                 className="border rounded-xl p-4 outline-none focus:border-orange-500"
               />
 
@@ -176,7 +255,11 @@ function Checkout() {
                 type="text"
                 name="pincode"
                 placeholder="Pincode"
+                value={formData.pincode}
                 onChange={handleChange}
+                pattern="[0-9]{6}"
+                maxLength={6}
+                required
                 className="border rounded-xl p-4 outline-none focus:border-orange-500"
               />
 
@@ -184,7 +267,9 @@ function Checkout() {
                 rows="5"
                 name="address"
                 placeholder="Full Address"
+                value={formData.address}
                 onChange={handleChange}
+                required
                 className="border rounded-xl p-4 outline-none focus:border-orange-500 md:col-span-2"
               />
 
@@ -215,28 +300,19 @@ function Checkout() {
                   checked={formData.payment === "upi"}
                   onChange={handleChange}
                 />
-                UPI Payment
-              </label>
-
-              <label className="flex items-center gap-3 border rounded-xl p-4 cursor-pointer">
-                <input
-                  type="radio"
-                  name="payment"
-                  value="card"
-                  checked={formData.payment === "card"}
-                  onChange={handleChange}
-                />
-                Debit / Credit Card
+                UPI / Razorpay
               </label>
 
             </div>
 
-            {/* Place Order Button */}
             <button
+              type="button"
               onClick={paymentHandler}
-              className="w-full bg-orange-500 text-white py-4 rounded-xl font-semibold hover:bg-orange-600"
+              className="w-full mt-8 bg-orange-500 hover:bg-orange-600 text-white py-4 rounded-xl font-bold"
             >
-              Pay Now
+              {formData.payment === "cod"
+                ? "Place Order"
+                : "Pay Now"}
             </button>
 
           </form>
@@ -253,33 +329,18 @@ function Checkout() {
               <div className="space-y-5">
 
                 <div className="flex justify-between">
-                  <span className="text-gray-600">
-                    Subtotal
-                  </span>
-
-                  <span className="font-semibold">
-                    ₹{subtotal}
-                  </span>
+                  <span>Subtotal</span>
+                  <span>₹{subtotal}</span>
                 </div>
 
                 <div className="flex justify-between">
-                  <span className="text-gray-600">
-                    Delivery
-                  </span>
-
-                  <span className="font-semibold">
-                    ₹{delivery}
-                  </span>
+                  <span>Delivery</span>
+                  <span>₹{delivery}</span>
                 </div>
 
                 <div className="flex justify-between">
-                  <span className="text-gray-600">
-                    GST
-                  </span>
-
-                  <span className="font-semibold">
-                    ₹{gst}
-                  </span>
+                  <span>GST</span>
+                  <span>₹{gst}</span>
                 </div>
 
                 <hr />
@@ -296,42 +357,14 @@ function Checkout() {
 
               </div>
 
-              {/* Promo Code */}
-
-              <div className="mt-8">
-
-                <label className="font-semibold block mb-3">
-                  Promo Code
-                </label>
-
-                <div className="flex gap-3">
-
-                  <input
-                    type="text"
-                    placeholder="Enter Code"
-                    className="flex-1 border rounded-xl px-4 py-3 outline-none focus:border-orange-500"
-                  />
-
-                  <button
-                    className="bg-orange-500 hover:bg-orange-600 text-white px-6 rounded-xl"
-                  >
-                    Apply
-                  </button>
-
-                </div>
-
-              </div>
-
-              {/* Secure Payment */}
-
-              <div className="mt-10 bg-orange-50 rounded-2xl p-5">
+              <div className="mt-8 bg-orange-50 rounded-2xl p-5">
 
                 <h3 className="font-bold text-lg text-orange-600">
                   🔒 Secure Checkout
                 </h3>
 
                 <p className="mt-2 text-gray-600 text-sm leading-6">
-                  Your payment information is encrypted and completely secure.
+                  Your payment information is encrypted and secure.
                 </p>
 
               </div>
@@ -341,9 +374,7 @@ function Checkout() {
           </div>
 
         </div>
-
       </section>
-
     </>
   );
 }

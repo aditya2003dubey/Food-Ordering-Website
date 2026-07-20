@@ -17,3 +17,13 @@ export const createPaymentOrder = async (amount, token) => {
 
   return data;
 };
+
+export const verifyPayment = async (data, token) => {
+  const res = await API.post("/verify", data, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  return res.data;
+};

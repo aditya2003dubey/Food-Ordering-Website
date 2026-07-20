@@ -33,9 +33,17 @@ function Admin() {
 
   const addFood = async () => {
     try {
+      const data = new FormData();
+
+      data.append("name", form.name);
+      data.append("price", form.price);
+      data.append("category", form.category);
+      data.append("description", form.description);
+      data.append("image", form.image);
+
       await axios.post(
         "http://localhost:5000/api/admin/food",
-        form,
+        data,
         {
           headers: {
             Authorization: `Bearer ${user.token}`,
@@ -54,6 +62,7 @@ function Admin() {
       });
 
       fetchFoods();
+
     } catch (err) {
       alert(err.response?.data?.message || "Error");
     }
@@ -61,9 +70,20 @@ function Admin() {
 
   const updateFood = async () => {
     try {
+      const data = new FormData();
+
+      data.append("name", form.name);
+      data.append("price", form.price);
+      data.append("category", form.category);
+      data.append("description", form.description);
+
+      if (form.image instanceof File) {
+        data.append("image", form.image);
+      }
+
       await axios.put(
         `http://localhost:5000/api/admin/food/${editingId}`,
-        form,
+        data,
         {
           headers: {
             Authorization: `Bearer ${user.token}`,
@@ -84,6 +104,7 @@ function Admin() {
       });
 
       fetchFoods();
+
     } catch (err) {
       alert(err.response?.data?.message || "Error");
     }
@@ -159,12 +180,28 @@ function Admin() {
           />
 
           <input
-            name="image"
-            placeholder="Image URL"
-            value={form.image}
-            onChange={handleChange}
+            type="file"
+            accept="image/*"
+            onChange={(e) =>
+              setForm({
+                ...form,
+                image: e.target.files[0],
+              })
+            }
             className="border w-full p-3 rounded mb-3"
           />
+
+          {form.image && (
+            <img
+              src={
+                typeof form.image === "string"
+                  ? form.image
+                  : URL.createObjectURL(form.image)
+              }
+              alt="Preview"
+              className="w-40 h-40 object-cover rounded-lg border mt-3"
+            />
+          )}
 
           <textarea
             name="description"
@@ -173,7 +210,6 @@ function Admin() {
             onChange={handleChange}
             className="border w-full p-3 rounded mb-3"
           />
-
           <button
             onClick={editingId ? updateFood : addFood}
             className="bg-orange-500 text-white w-full py-3 rounded-lg"
