@@ -48,9 +48,11 @@ export const getCart = async (req, res) => {
       user: req.params.userId,
     }).populate("product");
 
+    const validCart = cart.filter(item => item.product);
+
     res.json({
       success: true,
-      cart,
+      cart: validCart,
     });
 
   } catch (error) {

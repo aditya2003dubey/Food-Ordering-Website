@@ -1,12 +1,8 @@
 import express from "express";
 import protect from "../middleware/authMiddleware.js";
 import adminMiddleware from "../middleware/adminMiddleware.js";
-
-import {
-  addFood,
-  updateFood,
-  deleteFood,
-} from "../controllers/adminController.js";
+import upload from "../middleware/upload.js";
+import { addFood,updateFood,deleteFood,getDashboard,getAllOrders, updateOrderStatus } from "../controllers/adminController.js";
 
 const router = express.Router();
 
@@ -14,6 +10,7 @@ router.post(
   "/food",
   protect,
   adminMiddleware,
+  upload.single("image"),
   addFood
 );
 
@@ -21,6 +18,7 @@ router.put(
   "/food/:id",
   protect,
   adminMiddleware,
+  upload.single("image"),
   updateFood
 );
 
@@ -31,16 +29,26 @@ router.delete(
   deleteFood
 );
 
+
+router.get(
+  "/orders",
+  protect,
+  adminMiddleware,
+  getAllOrders
+);
+
+router.put(
+  "/orders/:id",
+  protect,
+  adminMiddleware,
+  updateOrderStatus
+);
+
 router.get(
   "/dashboard",
   protect,
   adminMiddleware,
-  (req, res) => {
-    res.json({
-      success: true,
-      message: "Welcome Admin",
-    });
-  }
-);
+  getDashboard
+)
 
 export default router;

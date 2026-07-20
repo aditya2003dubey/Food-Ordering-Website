@@ -10,7 +10,9 @@ import cartRoutes from "./routes/cartRoutes.js";
 import paymentRoutes from "./routes/paymentRoutes.js";
 import adminRoutes from "./routes/adminRoutes.js";
 
-dotenv.config();
+dotenv.config({path: "./.env"});
+
+console.log(process.env.RAZORPAY_KEY_ID);
 
 connectDB();
 
@@ -25,7 +27,7 @@ app.use("/api/foods", foodRoutes)
 
 app.use("/api/cart", cartRoutes);
 
-app.use("/api/order", orderRoutes);
+app.use("/api/orders", orderRoutes);
 
 app.use("/api/payment", paymentRoutes);
 
